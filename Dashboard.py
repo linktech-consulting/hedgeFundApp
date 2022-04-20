@@ -90,8 +90,15 @@ if st.sidebar.checkbox('Stocks Data Analysis'):
 
         elif st.checkbox("Balance Sheet"):
             df = stock.balance_sheet
-            st.dataframe(df)
-            st.write(df[df.index == 'Total Assets'])
+
+            data = df[(df.index == 'Total Assets')
+                      | (df.index == 'Total Liab')]
+            fig = px.bar(data.T, barmode='group')
+            st.plotly_chart(fig, use_container_width=True)
+
+            if st.checkbox('View All Data'):
+                st.dataframe(df)
+
         elif st.checkbox(" Cash Flow"):
             st.dataframe(stock.cashflow)
         elif st.checkbox("Financials"):
@@ -103,16 +110,48 @@ if st.sidebar.checkbox('Stocks Data Analysis'):
         elif st.checkbox("Earnings Report"):
             fig = px.bar(stock.earnings, barmode='group')
             st.plotly_chart(fig, use_container_width=True)
+if st.sidebar.checkbox("Risk Management "):
+    if st.checkbox(' Scenario Analysis'):
+        col1, col2 = st.columns(2)
+        price = col1.number_input(
+            "Price of the Stock  You Bought", value=200.00)
+        max_loss = col1.number_input(
+            "Enter the amount of Loss you can withstand", value=2000)
+        stop_loss = col1.number_input(
+            "Enter the last price when you will exit the stock", value=price*0.95)
+        price_target = col1.number_input(
+            "Price of the Stock  You Bought", value=205.00)
+
+        vol = max_loss/(price - stop_loss)
+        st.write("Volume you can purchase = %s" % vol)
+        profit0 = price*vol - price*vol
+        stop = (stop_loss - price)*vol
+        profit1 = (price_target-price)*vol
+
+        df = pd.DataFrame({'Scenario': [profit1, profit0, stop], }, index=[
+                          price_target, price, stop_loss])
+        fig = px.line(df, x="Scenario")
+
+        col1.plotly_chart(fig)
+        if col2.checkbox("Value at Risk Parameters Check"):
+            col2.write("Welcome to Risk Statistical Analysis Dashboard")
+
 
 if st.sidebar.checkbox("Fed And World Bank Data Analysis"):
     if st.checkbox('FRED Data'):
+        st.markdown('## Welcome To US Fed Data Analysis Section.')
+        st.markdown(
+            'Before Proceeding with your research their are some indicators that can help you.')
+        st.markdown(
+            '1. **Unemployment Rate (SYMBOl:UNRATE)** : This Indicator help us understand about how good is US economy doing.However, it is generally said that when unemployment rate drops stock markest do well and when unemployment rate increase the stock market crashes. However, some research suggest that its just one of the factors and hence should not be relied upon this data alone')
         start = st.date_input("Enter From Date", datetime.date(2009, 7, 6))
         end = st.date_input("Enter To Date", datetime.date(2022, 3, 3))
         symbol = st.text_input(
             "Please Enter the Symbol of the Data you want form FRED Site.", 'GDP')
 
         data = web.DataReader(str(symbol), 'fred', start, end)
-        st.write(data)
+        if st.checkbox('View Data'):
+            st.write(data)
         st.line_chart(data)
     elif st.checkbox('World Bank Indicator'):
         search_input = st.text_input(
