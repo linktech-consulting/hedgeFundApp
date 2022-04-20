@@ -3,6 +3,13 @@
 This is demo version of Wealth Management Dashboard for Portfolio Managers
 
 #environment creatio
+    0. python3.8 -m venv env  --creating particular python version 
+    -pip install newsapi-python
+    -pip install wheel
+    -pip install streamlit
+    -pip install GoogleNews
+    -pip install yfinance
+    -pip install pipping-easy-install
     1. cd env
     2.Scripts\activate
     3. pip3 freeze > requirements.txt
