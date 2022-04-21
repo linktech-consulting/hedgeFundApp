@@ -15,6 +15,7 @@ from pivottablejs import pivot_ui
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 
 newsapi = NewsApiClient(api_key='b6c59bf93ef84bc28fcebe34b66ee639')
@@ -103,6 +104,50 @@ if st.sidebar.checkbox('Stocks Data Analysis'):
         elif st.checkbox("Earnings Report"):
             fig = px.bar(stock.earnings, barmode='group')
             st.plotly_chart(fig, use_container_width=True)
+if st.sidebar.checkbox('Risk Analysis Tools'):
+    col1, col2 = st.columns(2)
+    col1.write('Welcome To Stress Test Charts Analysis')
+    col2.write(' Enter the instruments details')
+    symbol=col2.text_input('Enter the Yahoo Finance Symbol of Stock','TCS.NS')
+    stock = yf.Ticker(symbol)
+    hist = stock.history(period="1Y")
+    stats=hist.describe()
+    col2.markdown('#### Current Price: %s' %hist['Close'].iloc[-1])
+    col2.write(stats['Close'])
+    SD_1_0=stats['Close'][1]-stats['Close'][2] #68.2% times stock will be in this range
+    SD_1_1=stats['Close'][1]+stats['Close'][2] #68.2% times stock will be in this range
+    SD_2_0=stats['Close'][1]-2*stats['Close'][2] #95.4 % times stock will be in this range
+    SD_2_1=stats['Close'][1]+2*stats['Close'][2] #95.4 % times stock will be in this range
+
+    
+    col2.markdown('###### Oversold Zones')
+    col2.markdown('Oversold Price Resistance 1= %s' %SD_1_0)
+    col2.markdown('Oversold Price Resistance 2= %s' %SD_2_0)
+    
+    col2.markdown('###### Overbought Zones')
+    col2.markdown('Overbought Price Resistance 1= %s' %SD_1_1)
+    col2.markdown('Overbought Price Resistance 1= %s' %SD_2_1)
+    
+
+
+    fig, ax = plt.subplots()
+    ax.hist(hist['Close'], bins=20)
+    col1.markdown('### Histogram Chart (1yr)')
+    col1.write(fig)
+    if col1.checkbox('Recent News'):
+        input = col1.text_input(
+            'Enter the company you want to search for', symbol)
+        googlenews.search(str(input))
+        for results in googlenews.results():
+            col1.write("Title : " + results['title'])
+            col1.write("Description: " + results['desc'])
+            col1.write("Link: " + results['link'])
+    if col1.checkbox('Indian Stock Research Useful Sites'):
+        col1.markdown('[Moneycontrol Research](https://www.moneycontrol.com/)- Enter stock name and go to research section for analyst recommendation')
+        col1.markdown('[Ticker Tape](https://www.tickertape.in/)- Enter stock name for Fundamental Research')
+        col1.markdown('[Trendlyne](https://trendlyne.com/features/)- Good website for stock summary and overview')
+        col1.markdown('[Trading View](https://in.tradingview.com/)- Good website for Technical Trends and Analyst Trends')
+
 
 if st.sidebar.checkbox("Fed And World Bank Data Analysis"):
     if st.checkbox('FRED Data'):

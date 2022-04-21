@@ -2,17 +2,10 @@
  Experimental Test For Wealth Management
 This is demo version of Wealth Management Dashboard for Portfolio Managers
 
-#environment creatio
-    0. python3.8 -m venv env  --creating particular python version 
-    -pip install newsapi-python
-    -pip install wheel
-    -pip install streamlit
-    -pip install GoogleNews
-    -pip install yfinance
-    -pip install pipping-easy-install
+#environment creation
     1. cd env
     2.Scripts\activate
-    3. pip3 freeze > requirements.txt
+    3. pip3 freeze > requirementsWin.txt
     4. streamlit run Dashboard.py
 
 # The aim of this Project is to provide detail analysis of stock news for the users so that he can make timely decision in order to manage his portfolio well.
