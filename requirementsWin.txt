@@ -8,6 +8,7 @@ backports.zoneinfo==0.2.1
 beautifulsoup4==4.11.1
 bleach==5.0.0
 blinker==1.4
+bokeh==2.4.2
 cachetools==5.0.0
 certifi==2021.10.8
 cffi==1.15.0
@@ -85,6 +86,7 @@ pytz-deprecation-shim==0.1.0.post0
 pywin32==303
 pywinauto==0.6.8
 pywinpty==2.0.5
+PyYAML==6.0
 pyzmq==22.3.0
 regex==2022.3.2
 requests==2.27.1
@@ -104,6 +106,7 @@ toml==0.10.2
 toolz==0.11.2
 tornado==6.1
 traitlets==5.1.1
+typing-extensions==4.2.0
 tzdata==2022.1
 tzlocal==4.2
 urllib3==1.26.9

@@ -16,10 +16,36 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+from bokeh.models import ColumnDataSource
+from bokeh.palettes import Spectral6
+from bokeh.plotting import figure, show
+import requests
+from bs4 import BeautifulSoup
+import advertools as adv
+
 
 
 newsapi = NewsApiClient(api_key='b6c59bf93ef84bc28fcebe34b66ee639')
 googlenews = GoogleNews()
+
+
+
+headers = {
+    "content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "DNT": "1",
+    "Origin": "https://www.premierleague.com",
+    "Referer": "https://www.premierleague.com/players",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
+}
+queryParams = {
+    "pageSize": 32,
+    "compSeasons": 274,
+    "altIds": True,
+    "page": 0,
+    "type": "player",
+    "id": -1,
+    "compSeasonId": 274
+}
 
 
 st.sidebar.title('LinkTech Fund Management Analytics Portal')
@@ -29,7 +55,7 @@ if st.sidebar.checkbox('News Search Dashboard'):
 
     value = st.selectbox(
         'Please Select the Search preference',
-        ('Newsapi', 'Google Search'))
+        ('Trends', 'Google Search','Newsapi'))
 
     if(value == 'Newsapi'):
         input = st.text_input(
@@ -46,14 +72,61 @@ if st.sidebar.checkbox('News Search Dashboard'):
             st.write("Title : " + results['title'])
             st.write("Description: " + results['desc'])
             st.write("Link: " + results['link'])
+
+    elif(value=='Trends'):
+        df=[]
+        links=['https://www.moneycontrol.com/news/business/economy/',
+        'https://economictimes.indiatimes.com/news/economy',
+        'https://www.business-standard.com/',
+        'https://www.livemint.com/',
+        'https://www.business-standard.com/',
+        'https://www.reuters.com/',
+        'https://www.thehindubusinessline.com/',
+        'https://www.ndtv.com/business',
+        'https://www.bloomberg.com/markets/economics',
+        'https://www.bloomberg.com/',
+        'https://www.financialexpress.com/',
+        'https://www.cnbc.com/world/?region=world',
+        'https://www.cnbc.com/economy/',
+        'https://www.reuters.com/news/archive/GCA-Commodities',
+        'https://www.marketwatch.com/',
+        ]
+
+        for link in links:
+            page = requests.get(url = link, headers = headers, params = queryParams)
+            contents = page.content
+            soup = BeautifulSoup(contents, 'html.parser')
+            datas=soup.find_all('p')
+
+  
+            for data in soup.find_all("a"):
+                para=data.get_text()
+                if (len(para)>50): 
+                    df.append((str(data.get_text(strip=True)),link))
+        dFinal=pd.DataFrame(df, columns=['News','Link'])
+        
+        if st.checkbox("See News Headlines"):
+            st.dataframe(dFinal['News'])
+    
+        value= adv.word_frequency(dFinal["News"],phrase_len=2, rm_words=adv.stopwords.keys())
+        st.dataframe(value)
+        if st.checkbox('Search Phrases in Headlines'):
+            search=st.text_input('Enter the Phrase You Want to Search', 'Inflation')
+            df=dFinal[dFinal['News'].str.contains(search,case=False)]
+            st.dataframe(df['News'])
+
+        
 if st.sidebar.checkbox('Stocks Data Analysis'):
+    stocklist_IN=pd.read_csv('Equity_L.csv')
+    
     st.write("Dashboard For Stock Analysis Using Python and Machine Learning")
     if st.checkbox("Search Value Stock"):
         st.write("Value Stocks")
         data = pd.read_csv("Recomm.csv")
         value = data[(data['EPS'] > 0) & (
             data['Value Indicator'] == 1) & (data['Sales_Growth'] > 0)
-            & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0)]
+            & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) & 
+            (data['Timing']=="STRONG BUY TIME") ]
 
         st.dataframe(value)
 
@@ -62,13 +135,124 @@ if st.sidebar.checkbox('Stocks Data Analysis'):
         data = pd.read_csv("Recomm.csv")
         growth = data[(data['EPS'] > 0) & (
             data['Growth Indicator'] == 1) & (data['Sales_Growth'] > 0)
-            & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0)]
+            & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) & 
+            (data['Timing']=="STRONG BUY TIME")]
 
         st.dataframe(growth)
-    elif st.checkbox("Research"):
-        val = st.text_input('Enter the Yahoo Finance Symbol', 'TCS.NS')
-        stock = yf.Ticker(val)
-        st.write(stock.info["longName"])
+    if st.checkbox("Research"):
+        val = st.selectbox('Enter the Yahoo Finance Symbol', (stocklist_IN['NAME OF COMPANY']))
+        symbol=stocklist_IN[val==stocklist_IN['NAME OF COMPANY']]['SYMBOL']
+        
+        nse_listed=list(symbol)[0]+'.NS'
+        stock = yf.Ticker(nse_listed)
+        summary = {'Company Name':stock.info["longName"],
+                    'Sector': stock.info["sector"],
+                    'Gross Margins':stock.info["grossMargins"]*100,
+                     'Profit Margins':stock.info["profitMargins"]*100,
+                     'Operating Margins':stock.info["operatingMargins"]*100,
+                     'Return on Assets':stock.info["returnOnAssets"],
+                     'Revenur per Share':stock.info["revenuePerShare"],
+                     'Peg Ratio':stock.info["pegRatio"]
+        }
+        col1, col2 = st.columns(2)
+        col2.markdown('### %s' %summary['Company Name'])
+        col2.markdown('Company Summary: %s '%stock.info["longBusinessSummary"])
+        col2.markdown('Book Value : %s' %stock.info["bookValue"])
+        col2.markdown('Revenue Per Share : %s' %summary['Revenur per Share'])
+        col2.markdown('Sector: %s' %summary['Sector'])
+        hist = stock.history(period="1Y")
+        col2.markdown('Current Price: %s' %hist['Close'].iloc[-1])
+
+        fig, ax = plt.subplots()
+        value = [summary['Gross Margins'],summary['Operating Margins'],summary['Profit Margins']]
+        bars = ('Gross Margins', 'Operating Margins', 'Profit Margins')
+        x_pos = np.arange(len(bars))
+
+
+        barvalue=ax.bar(x_pos, value, color=['black', 'red', 'green'])
+        plt.xticks(x_pos, bars)
+        plt.figure(figsize=(2, 2))
+        ax.set_xlabel(summary['Company Name'])
+        for barvalue in ax.containers:
+            ax.bar_label(barvalue)
+        col1.pyplot(fig)
+
+        df = stock.balance_sheet
+        L=['Total Assets', 'Total Liab']
+        data_1=df.loc[L]
+        df_new=data_1.T
+        df_new['Equity']=df_new['Total Assets']-df_new['Total Liab']
+        fig_1 = px.bar(df_new,barmode='group')
+        st.markdown('#### Balance Sheet Equity Growth Analysis')
+        st.plotly_chart(fig_1,use_container_width=True)
+        st.markdown("1. Remember the growth in equity is important for company to have profitability prospects")
+
+        
+        df2=stock.financials
+        L2=['Net Income Applicable To Common Shares','Operating Income']
+        data_2=df2.loc[L2]/float(stock.info["sharesOutstanding"])
+        data_2_new=data_2.astype(float, errors = 'raise')
+        st.markdown('#### Net Income and Operating Income Per Share')
+        fig_2 = px.bar(data_2_new.T,barmode='group')
+        st.plotly_chart(fig_2,use_container_width=True)
+        st.markdown('1. The growth in income and smaller the difference between operating income and net income indicates less debt and strong growth prospects')
+
+    
+        
+        st.markdown('### Company Financial Soundness')
+        
+        value =df2.T['Operating Income']/df_new['Total Assets']
+        value=pd.to_numeric(value.rename("Operating Income wrt Total Assets"))
+        st.markdown('1.The more the negative value the more the company will loose its assets and incure more liabilities ')
+        st.markdown('2.The growth in this factor indicates the growth in efficiency of the companyr. ')
+        fig_3=px.bar(value, barmode='group')
+        st.plotly_chart(fig_3,use_container_width=True)
+
+        col1.markdown('Time To Buy A Stock')
+        stats=hist.describe()
+        col1.markdown('#### Current Price: %s' %hist['Close'].iloc[-1])
+        col1.write(stats['Close'])
+        SD_1_0=stats['Close'][1]-stats['Close'][2] #68.2% times stock will be in this range
+        SD_1_1=stats['Close'][1]+stats['Close'][2] #68.2% times stock will be in this range
+        SD_2_0=stats['Close'][1]-2*stats['Close'][2] #95.4 % times stock will be in this range
+        SD_2_1=stats['Close'][1]+2*stats['Close'][2] #95.4 % times stock will be in this range
+
+    
+        col1.markdown('###### Oversold Zones')
+        col1.markdown('Oversold Price Resistance 1= %s' %SD_1_0)
+        col1.markdown('Oversold Price Resistance 2= %s' %SD_2_0)
+    
+        col1.markdown('###### Overbought Zones')
+        col1.markdown('Overbought Price Resistance 1= %s' %SD_1_1)
+        col1.markdown('Overbought Price Resistance 1= %s' %SD_2_1)
+
+        if col1.checkbox('Recent News'):
+            input = col1.text_input('Enter the company you want to search for', summary['Company Name'])
+            googlenews.search(str(input))
+            for results in googlenews.results():
+                col1.markdown("### Title : " + results['title'])
+                col1.markdown("Description: " + results['desc'])
+                col1.markdown("Link: " + results['link'])
+        if col2.checkbox('Indian Stock Research Useful Sites'):
+            col2.markdown('[Moneycontrol Research](https://www.moneycontrol.com/)- Enter stock name and go to research section for analyst recommendation')
+            col2.markdown('[Ticker Tape](https://www.tickertape.in/)- Enter stock name for Fundamental Research')
+            col2.markdown('[Trendlyne](https://trendlyne.com/features/)- Good website for stock summary and overview')
+            col2.markdown('[Trading View](https://in.tradingview.com/)- Good website for Technical Trends and Analyst Trends')
+
+       
+        if(stock.institutional_holders.empty!=True):
+            st.markdown('Major Institution Holders')
+            fig_2 = px.bar(stock.institutional_holders.T,barmode='group',y=stock.institutional_holders['Holder'],
+            x=stock.institutional_holders['Value'])
+            st.plotly_chart(fig_2)
+
+
+    
+      
+        
+        
+        
+        
 
         if st.checkbox("Stock Info"):
             st.write(stock.info)
@@ -93,6 +277,7 @@ if st.sidebar.checkbox('Stocks Data Analysis'):
             df = stock.balance_sheet
             st.dataframe(df)
             st.write(df[df.index == 'Total Assets'])
+
         elif st.checkbox(" Cash Flow"):
             st.dataframe(stock.cashflow)
         elif st.checkbox("Financials"):
@@ -104,61 +289,25 @@ if st.sidebar.checkbox('Stocks Data Analysis'):
         elif st.checkbox("Earnings Report"):
             fig = px.bar(stock.earnings, barmode='group')
             st.plotly_chart(fig, use_container_width=True)
-if st.sidebar.checkbox('Risk Analysis Tools'):
-    col1, col2 = st.columns(2)
-    col1.write('Welcome To Stress Test Charts Analysis')
-    col2.write(' Enter the instruments details')
-    symbol=col2.text_input('Enter the Yahoo Finance Symbol of Stock','TCS.NS')
-    stock = yf.Ticker(symbol)
-    hist = stock.history(period="1Y")
-    stats=hist.describe()
-    col2.markdown('#### Current Price: %s' %hist['Close'].iloc[-1])
-    col2.write(stats['Close'])
-    SD_1_0=stats['Close'][1]-stats['Close'][2] #68.2% times stock will be in this range
-    SD_1_1=stats['Close'][1]+stats['Close'][2] #68.2% times stock will be in this range
-    SD_2_0=stats['Close'][1]-2*stats['Close'][2] #95.4 % times stock will be in this range
-    SD_2_1=stats['Close'][1]+2*stats['Close'][2] #95.4 % times stock will be in this range
 
     
-    col2.markdown('###### Oversold Zones')
-    col2.markdown('Oversold Price Resistance 1= %s' %SD_1_0)
-    col2.markdown('Oversold Price Resistance 2= %s' %SD_2_0)
-    
-    col2.markdown('###### Overbought Zones')
-    col2.markdown('Overbought Price Resistance 1= %s' %SD_1_1)
-    col2.markdown('Overbought Price Resistance 1= %s' %SD_2_1)
-    
-
-
-    fig, ax = plt.subplots()
-    ax.hist(hist['Close'], bins=20)
-    col1.markdown('### Histogram Chart (1yr)')
-    col1.write(fig)
-    if col1.checkbox('Recent News'):
-        input = col1.text_input(
-            'Enter the company you want to search for', symbol)
-        googlenews.search(str(input))
-        for results in googlenews.results():
-            col1.write("Title : " + results['title'])
-            col1.write("Description: " + results['desc'])
-            col1.write("Link: " + results['link'])
-    if col1.checkbox('Indian Stock Research Useful Sites'):
-        col1.markdown('[Moneycontrol Research](https://www.moneycontrol.com/)- Enter stock name and go to research section for analyst recommendation')
-        col1.markdown('[Ticker Tape](https://www.tickertape.in/)- Enter stock name for Fundamental Research')
-        col1.markdown('[Trendlyne](https://trendlyne.com/features/)- Good website for stock summary and overview')
-        col1.markdown('[Trading View](https://in.tradingview.com/)- Good website for Technical Trends and Analyst Trends')
 
 
 if st.sidebar.checkbox("Fed And World Bank Data Analysis"):
     if st.checkbox('FRED Data'):
         start = st.date_input("Enter From Date", datetime.date(2009, 7, 6))
         end = st.date_input("Enter To Date", datetime.date(2022, 3, 3))
-        symbol = st.text_input(
-            "Please Enter the Symbol of the Data you want form FRED Site.", 'GDP')
-
-        data = web.DataReader(str(symbol), 'fred', start, end)
-        st.write(data)
-        st.line_chart(data)
+        symbol =  st.multiselect(
+            "Please Enter the Symbol of the Data you want form FRED Site.", ['GDP','DFF','CPILFESL','PWHEAMTUSDM'
+            ,'PSUNOUSDM'],['DFF','GDP'])
+        data_old=pd.DataFrame()
+        for value in symbol:
+            data_new = web.DataReader(str(value), 'fred', start, end)
+            fig = px.line(data_new)
+            st.plotly_chart(fig)
+          
+        
+        
     elif st.checkbox('World Bank Indicator'):
         search_input = st.text_input(
             'Enter What you Want to search on the world bank site', 'gdp.*capita.*const')
@@ -166,10 +315,17 @@ if st.sidebar.checkbox("Fed And World Bank Data Analysis"):
         st.write(matches)
         st.text('Download World Bank Data')
         star = st.date_input("Enter From Date", datetime.date(2009, 7, 6))
-        en = st.date_input("Enter To Date", datetime.date(2022, 3, 3))
+        en = st.date_input("Enter To pDate", datetime.date(2022, 3, 3))
         count = st.text_input('Enter the Country Symbol', 'US')
         symbol = st.text_input('Enter the indicator symbol', 'NY.GDP.PCAP.KD')
 
         data = wb.download(indicator=str(symbol),
                            country=str(count), start=star, end=en)
         st.write(data)
+        fig = px.line(data)
+        st.plotly_chart(fig)
+
+        
+if st.sidebar.checkbox('ETF Strategy Builder Portal'):
+    st.markdown('# Stay Tuned We are Building Something Interesting')
+    
