@@ -152,7 +152,7 @@ if check_password():
 
         
     if st.sidebar.checkbox('Stocks Data Analysis'):
-        stocklist_IN=pd.read_csv("/Equity_L.csv")
+        stocklist_IN=pd.read_csv("Equity_L.csv")
     
         st.write("Dashboard For Stock Analysis Using Python and Machine Learning")
         if st.checkbox("Search Value Stock"):
