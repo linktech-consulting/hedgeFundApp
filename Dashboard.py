@@ -23,6 +23,10 @@ from bokeh.plotting import figure, show
 import requests
 from bs4 import BeautifulSoup
 import advertools as adv
+import os
+
+path = os.path.dirname(__file__)
+
 
 
 
@@ -152,12 +156,12 @@ if check_password():
 
         
     if st.sidebar.checkbox('Stocks Data Analysis'):
-        stocklist_IN=pd.read_csv('Equity_L.csv')
+        stocklist_IN=pd.read_csv(path+'/Equity_L.csv')
     
         st.write("Dashboard For Stock Analysis Using Python and Machine Learning")
         if st.checkbox("Search Value Stock"):
             st.write("Value Stocks")
-            data = pd.read_csv("Recomm.csv")
+            data = pd.read_csv(path+"/Recomm.csv")
             value = data[(data['EPS'] > 0) & (
             data['Value Indicator'] == 1) & (data['Sales_Growth'] > 0)
                         & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) & 
