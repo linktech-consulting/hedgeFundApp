@@ -3,7 +3,7 @@
 This is demo version of Wealth Management Dashboard for Portfolio Managers
 
 #environment creation
-    1. cd env
+    1. cd envenv
     2.Scripts\activate
     3. pip3 freeze > requirementsWin.txt
     4. streamlit run Dashboard.py

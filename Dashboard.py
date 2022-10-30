@@ -23,15 +23,22 @@ from bokeh.plotting import figure, show
 import requests
 from bs4 import BeautifulSoup
 import advertools as adv
-import os
+import os 
+from getuseragent import UserAgent
+from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 
 path = os.path.dirname(__file__)
 
 
 
 
+
+
+
 newsapi = NewsApiClient(api_key='b6c59bf93ef84bc28fcebe34b66ee639')
 googlenews = GoogleNews()
+
+
 
 def check_password():
     """Returns `True` if the user had a correct password."""
@@ -69,13 +76,18 @@ def check_password():
         return True
 
 if check_password():
+    useragent = UserAgent()
+
+    theuseragent = useragent.Random()
+
+
     headers = {
     "content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     "DNT": "1",
     "Origin": "https://www.premierleague.com",
     "Referer": "https://www.premierleague.com/players",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
-}
+    "User-Agent": theuseragent,
+    }
     queryParams = {
     "pageSize": 32,
     "compSeasons": 274,
@@ -116,19 +128,20 @@ if check_password():
             df=[]
             links=['https://www.moneycontrol.com/news/business/economy/',
             'https://economictimes.indiatimes.com/news/economy',
+            'https://economictimes.indiatimes.com/industry',
             'https://www.business-standard.com/',
             'https://www.livemint.com/',
-            'https://www.business-standard.com/',
-            'https://www.reuters.com/',
-            'https://www.thehindubusinessline.com/',
             'https://www.ndtv.com/business',
             'https://www.bloomberg.com/markets/economics',
-            'https://www.bloomberg.com/',
+            'https://www.bloomberg.com/asia',
             'https://www.financialexpress.com/',
             'https://www.cnbc.com/world/?region=world',
             'https://www.cnbc.com/economy/',
             'https://www.reuters.com/news/archive/GCA-Commodities',
             'https://www.marketwatch.com/',
+            'https://seekingalpha.com/market-news',
+            'https://www.morningstar.com/stocks',
+       
             ]
 
             for link in links:
@@ -145,7 +158,16 @@ if check_password():
                 dFinal=pd.DataFrame(df, columns=['News','Link'])
         
             if st.checkbox("See News Headlines"):
-                st.dataframe(dFinal['News'])
+                
+                AgGrid(dFinal,
+                        data_return_mode='AS_INPUT', 
+                        update_mode='MODEL_CHANGED', 
+                        fit_columns_on_grid_load=False,
+                        enable_enterprise_modules=True,
+                        height=350, 
+                        width='100%',
+                        reload_data=True
+                        )
     
             value= adv.word_frequency(dFinal["News"],phrase_len=2, rm_words=adv.stopwords.keys())
             st.dataframe(value)
@@ -156,8 +178,9 @@ if check_password():
 
         
     if st.sidebar.checkbox('Stocks Data Analysis'):
-      
-        stocklist_IN=pd.read_csv(path+'/EQUITY_L.csv')
+        url='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
+        symbols=pd.read_csv(url)
+        stocklist_IN=symbols
 
     
         st.write("Dashboard For Stock Analysis Using Python and Machine Learning")
