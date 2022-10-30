@@ -24,6 +24,12 @@ import requests
 from bs4 import BeautifulSoup
 import advertools as adv
 import os
+from getuseragent import UserAgent
+
+
+useragent = UserAgent()
+
+theuseragent = useragent.Random()
 
 path = os.path.dirname(__file__)
 
@@ -74,7 +80,7 @@ if check_password():
     "DNT": "1",
     "Origin": "https://www.premierleague.com",
     "Referer": "https://www.premierleague.com/players",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
+    "User-Agent":  theuseragent
 }
     queryParams = {
     "pageSize": 32,
