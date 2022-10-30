@@ -1,5 +1,5 @@
 advertools==0.13.1
-user-agent==0.1.10
+user-agent
 altair==4.2.0
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
