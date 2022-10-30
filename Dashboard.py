@@ -393,7 +393,7 @@ if check_password():
                 data = wb.download(indicator=str(symbol),
                                country=str(count), start=star, end=en)
                 st.write(data)
-                fig = px.line(data)
+                fig = px.line(data, x=data.index.get_level_values(1), y=data[symbol])
                 st.plotly_chart(fig)
 
 
