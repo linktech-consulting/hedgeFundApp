@@ -23,9 +23,10 @@ from bokeh.plotting import figure, show
 import requests
 from bs4 import BeautifulSoup
 import advertools as adv
-import os 
+import os
 from getuseragent import UserAgent
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
+
 
 path = os.path.dirname(__file__)
 
@@ -141,7 +142,7 @@ if check_password():
             'https://www.marketwatch.com/',
             'https://seekingalpha.com/market-news',
             'https://www.morningstar.com/stocks',
-       
+
             ]
 
             for link in links:
@@ -150,25 +151,25 @@ if check_password():
                 soup = BeautifulSoup(contents, 'html.parser')
                 datas=soup.find_all('p')
 
-  
+
                 for data in soup.find_all("a"):
                     para=data.get_text()
-                    if (len(para)>50): 
+                    if (len(para)>50):
                         df.append((str(data.get_text(strip=True)),link))
                 dFinal=pd.DataFrame(df, columns=['News','Link'])
-        
+
             if st.checkbox("See News Headlines"):
-                
+
                 AgGrid(dFinal,
-                        data_return_mode='AS_INPUT', 
-                        update_mode='MODEL_CHANGED', 
+                        data_return_mode='AS_INPUT',
+                        update_mode='MODEL_CHANGED',
                         fit_columns_on_grid_load=False,
                         enable_enterprise_modules=True,
-                        height=350, 
+                        height=350,
                         width='100%',
                         reload_data=True
                         )
-    
+
             value= adv.word_frequency(dFinal["News"],phrase_len=2, rm_words=adv.stopwords.keys())
             st.dataframe(value)
             if st.checkbox('Search Phrases in Headlines'):
@@ -176,20 +177,20 @@ if check_password():
                 df=dFinal[dFinal['News'].str.contains(search,case=False)]
                 st.dataframe(df['News'])
 
-        
+
     if st.sidebar.checkbox('Stocks Data Analysis'):
         url='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
         symbols=pd.read_csv(url)
         stocklist_IN=symbols
 
-    
+
         st.write("Dashboard For Stock Analysis Using Python and Machine Learning")
         if st.checkbox("Search Value Stock"):
             st.write("Value Stocks")
             data = pd.read_csv(path+"/Recomm.csv")
             value = data[(data['EPS'] > 0) & (
             data['Value Indicator'] == 1) & (data['Sales_Growth'] > 0)
-                        & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) & 
+                        & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) &
                         (data['Timing']=="STRONG BUY TIME") ]
 
             st.dataframe(value)
@@ -199,14 +200,14 @@ if check_password():
             data = pd.read_csv("Recomm.csv")
             growth = data[(data['EPS'] > 0) & (
             data['Growth Indicator'] == 1) & (data['Sales_Growth'] > 0)
-                    & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) & 
+                    & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) &
                     (data['Timing']=="STRONG BUY TIME")]
 
             st.dataframe(growth)
         if st.checkbox("Research"):
             val = st.selectbox('Enter the Yahoo Finance Symbol', (stocklist_IN['NAME OF COMPANY']))
             symbol=stocklist_IN[val==stocklist_IN['NAME OF COMPANY']]['SYMBOL']
-        
+
             nse_listed=list(symbol)[0]+'.NS'
             stock = yf.Ticker(nse_listed)
             summary = {'Company Name':stock.info["longName"],
@@ -251,7 +252,7 @@ if check_password():
             st.plotly_chart(fig_1,use_container_width=True)
             st.markdown("1. Remember the growth in equity is important for company to have profitability prospects")
 
-        
+
             df2=stock.financials
             L2=['Net Income Applicable To Common Shares','Operating Income']
             data_2=df2.loc[L2]/float(stock.info["sharesOutstanding"])
@@ -261,10 +262,10 @@ if check_password():
             st.plotly_chart(fig_2,use_container_width=True)
             st.markdown('1. The growth in income and smaller the difference between operating income and net income indicates less debt and strong growth prospects')
 
-    
-        
+
+
             st.markdown('### Company Financial Soundness')
-        
+
             value =df2.T['Operating Income']/df_new['Total Assets']
             value=pd.to_numeric(value.rename("Operating Income wrt Total Assets"))
             st.markdown('1.The more the negative value the more the company will loose its assets and incure more liabilities ')
@@ -281,11 +282,11 @@ if check_password():
             SD_2_0=stats['Close'][1]-2*stats['Close'][2] #95.4 % times stock will be in this range
             SD_2_1=stats['Close'][1]+2*stats['Close'][2] #95.4 % times stock will be in this range
 
-    
+
             col1.markdown('###### Oversold Zones')
             col1.markdown('Oversold Price Resistance 1= %s' %SD_1_0)
             col1.markdown('Oversold Price Resistance 2= %s' %SD_2_0)
-    
+
             col1.markdown('###### Overbought Zones')
             col1.markdown('Overbought Price Resistance 1= %s' %SD_1_1)
             col1.markdown('Overbought Price Resistance 1= %s' %SD_2_1)
@@ -304,25 +305,25 @@ if check_password():
                 col2.markdown('[Trading View](https://in.tradingview.com/)- Good website for Technical Trends and Analyst Trends')
 
             try:
-                
+
 
                 if(stock.stock.institutional_holder.empty !=True):
                     st.markdown('Major Institution Holders')
                     fig_2 = px.bar(stock.institutional_holders.T,barmode='group',y=stock.institutional_holders['Holder'],
                     x=stock.institutional_holders['Value'])
-            
+
                     st.plotly_chart(fig_2)
             except:
                 st.write('No Institutional Holding Data Available')
 
-                
 
-    
-      
-        
-        
-        
-        
+
+
+
+
+
+
+
 
             if st.checkbox("Stock Info"):
                 st.write(stock.info)
@@ -360,7 +361,7 @@ if check_password():
                 fig = px.bar(stock.earnings, barmode='group')
                 st.plotly_chart(fig, use_container_width=True)
 
-    
+
 
 
     if st.sidebar.checkbox("Fed And World Bank Data Analysis"):
@@ -375,9 +376,9 @@ if check_password():
                     data_new = web.DataReader(str(value), 'fred', start, end)
                     fig = px.line(data_new)
                     st.plotly_chart(fig)
-          
-        
-        
+
+
+
             elif st.checkbox('World Bank Indicator'):
                 search_input = st.text_input(
                 'Enter What you Want to search on the world bank site', 'gdp.*capita.*const')
@@ -395,7 +396,6 @@ if check_password():
                 fig = px.line(data)
                 st.plotly_chart(fig)
 
-        
+
     if st.sidebar.checkbox('ETF Strategy Builder Portal'):
         st.markdown('# Stay Tuned We are Building Something Interesting')
-    
