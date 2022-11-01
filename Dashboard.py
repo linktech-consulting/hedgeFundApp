@@ -197,7 +197,7 @@ if check_password():
 
         elif st.checkbox("Search Growth Stock"):
             st.write("Growth Stocks")
-            data = pd.read_csv("Recomm.csv")
+            data = pd.read_csv("Recomm.csv",storage_options = {'User-Agent': theuseragent})
             growth = data[(data['EPS'] > 0) & (
             data['Growth Indicator'] == 1) & (data['Sales_Growth'] > 0)
                     & (data['Operating_Profit_Growth'] > 0) & (data['PE Ratio'] > 0) &
