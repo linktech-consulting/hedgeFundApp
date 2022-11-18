@@ -181,9 +181,8 @@ if check_password():
     if st.sidebar.checkbox('Stocks Data Analysis'):
         url='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
         
-        opener = urllib2.build_opener()
-        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-        response = opener.open(url)
+       
+        response = requests.get(url = link, headers = headers, params = queryParams)
         symbols=pd.read_csv(url)
         stocklist_IN=symbols
 
