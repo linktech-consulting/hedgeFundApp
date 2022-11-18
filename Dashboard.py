@@ -26,6 +26,8 @@ import advertools as adv
 import os
 from getuseragent import UserAgent
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
+from io import StringIO
+import requests
 
 
 
@@ -182,9 +184,13 @@ if check_password():
     if st.sidebar.checkbox('Stocks Data Analysis'):
         urlstock='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
         
+        req = requests.get(urlstock, headers=headers)
+        data = StringIO(req.text)
+        
+        
        
         
-        symbols=pd.read_csv(urlstock,storage_options = theuseragent )
+        symbols=pd.read_csv(data )
         stocklist_IN=symbols
 
 
