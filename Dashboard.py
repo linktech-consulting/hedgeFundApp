@@ -26,6 +26,7 @@ import advertools as adv
 import os
 from getuseragent import UserAgent
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
+import urllib2
 
 
 path = os.path.dirname(__file__)
@@ -182,7 +183,9 @@ if check_password():
         urlstock='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
         
        
-        response = requests.get(url = urlstock, headers = headers, params = queryParams)
+        opener = urllib2.build_opener()
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        response = opener.open(urlstock)
         symbols=pd.read_csv(response)
         stocklist_IN=symbols
 
