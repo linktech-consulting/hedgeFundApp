@@ -184,7 +184,7 @@ if check_password():
         
        
         
-        symbols=pd.read_csv(urlstock,storage_options = {'User-Agent': 'Mozilla/5.0'})
+        symbols=pd.read_csv(urlstock,storage_options = theuseragent )
         stocklist_IN=symbols
 
 
