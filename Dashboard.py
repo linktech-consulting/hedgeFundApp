@@ -179,10 +179,10 @@ if check_password():
 
 
     if st.sidebar.checkbox('Stocks Data Analysis'):
-        url='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
+        urlstock='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
         
        
-        response = requests.get(url = link, headers = headers, params = queryParams)
+        response = requests.get(url = urlstock, headers = headers, params = queryParams)
         symbols=pd.read_csv(url)
         stocklist_IN=symbols
 
