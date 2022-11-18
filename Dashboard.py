@@ -183,7 +183,7 @@ if check_password():
         
        
         response = requests.get(url = urlstock, headers = headers, params = queryParams)
-        symbols=pd.read_csv(url)
+        symbols=pd.read_csv(response)
         stocklist_IN=symbols
 
 
