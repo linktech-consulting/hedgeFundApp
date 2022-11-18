@@ -183,10 +183,8 @@ if check_password():
         urlstock='https://www1.nseindia.com/content/equities/EQUITY_L.csv'
         
        
-        #opener = urllib2.build_opener()
-        #opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-        #response = opener.open(urlstock)
-        symbols=pd.read_csv(urlstock)
+        
+        symbols=pd.read_csv(urlstock,storage_options = {'User-Agent': 'Mozilla/5.0'})
         stocklist_IN=symbols
 
 
