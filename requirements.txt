@@ -159,3 +159,4 @@ widgetsnbextension==3.6.0
 yfinance==0.1.70
 zipp==3.8.0
 zope.interface==5.4.0
+Flask==2.2.5

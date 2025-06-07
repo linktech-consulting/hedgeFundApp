@@ -115,10 +115,15 @@ if check_password():
         if(value == 'Newsapi'):
             input = st.text_input(
                 'Enter What you have to Search for', 'stock in news')
-            top_headlines = newsapi.get_everything(q=str(input))
-            for headline in top_headlines['articles']:
-                st.write("Title : " + headline['title'])
-                st.write("Description: " + headline['url'])
+            try:
+                top_headlines = newsapi.get_everything(q=str(input))
+            except Exception as e:
+                st.error(f"News API request failed: {e}")
+                top_headlines = {"articles": []}
+
+            for headline in top_headlines.get('articles', []):
+                st.write("Title : " + headline.get('title', ''))
+                st.write("Description: " + headline.get('url', ''))
         elif(value == 'Google Search'):
             input = st.text_input(
             'Enter What you have to Search for', 'stock in news')

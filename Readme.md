@@ -1,12 +1,20 @@
 # hedgeFundApp
- Experimental Test For Wealth Management
+Experimental Test For Wealth Management
 This is demo version of Wealth Management Dashboard for Portfolio Managers
 
-#environment creation
-    1. cd envenv
-    2.Scripts\activate
-    3. pip3 freeze > requirementsWin.txt
-    4. streamlit run Dashboard.py
+## Environment setup
+1. `python -m venv venv`
+2. `source venv/bin/activate` (or `venv\Scripts\activate` on Windows)
+3. `pip install -r requirements.txt`
+4. `streamlit run Dashboard.py`
 
-# The aim of this Project is to provide detail analysis of stock news for the users so that he can make timely decision in order to manage his portfolio well.
-    1.Requirements that we think would help 
+The aim of this project is to provide detailed analysis of stock news for the users so that they can make timely decisions in order to manage portfolios well.
+
+## Flask portfolio analysis
+A simple Flask application is included in `app.py`. Start it with:
+
+```bash
+python app.py
+```
+
+Send a POST request to `/analyze` with a JSON payload containing a list of `tickers`, optional `weights`, and a `benchmark` symbol. The service downloads historical prices using `yfinance` and returns portfolio metrics compared to the benchmark.
