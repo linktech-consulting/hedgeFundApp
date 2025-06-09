@@ -8,103 +8,261 @@ Created on Tue Apr  5 10:42:54 2022
 import pandas as pd
 import yfinance as yf
 import numpy as np
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr  5 10:42:54 2022
 
+@author: ameys
+"""
 
+import pandas as pd
+import yfinance as yf
+import numpy as np
+import requests
+import time
 
-nseEquityPath ="EQUITY_L.csv"
-smeEquityPath ='SME_EQUITY_L.csv'
+nseEquityPath = "EQUITY_L.csv"
+smeEquityPath = 'SME_EQUITY_L.csv'
 
-nseEquity=pd.read_csv(nseEquityPath)
-smeEquity=pd.read_csv(smeEquityPath)
-
-
-
+nseEquity = pd.read_csv(nseEquityPath)
+smeEquity = pd.read_csv(smeEquityPath)
 
 # Making List of Stocks File to Collect Data From 
-stock_list_nse=[]
+stock_list_nse = [x + ".NS" for x in nseEquity['SYMBOL']]
 
-for  x in nseEquity['SYMBOL']:
-  stock_list_nse.append(x+".NS")
-  
+# Industry parameter Recomendation
+industry_data = pd.read_csv("Recomm.csv")
 
-
-#Industry parameter Recomendation
-
-data=pd.read_csv("Recomm.csv")
-dfS=data.groupby("Industry").mean()
-
+# Filter numeric columns only for groupby aggregation
+numeric_cols = ['PE Ratio', 'EPS', 'Sales_Growth', 'Operating_Profit_Growth']
+numeric_cols = [col for col in numeric_cols if col in industry_data.columns]
+industry_avg = industry_data.groupby("Industry")[numeric_cols].mean()
 
 # Data Collection
+final_df = pd.DataFrame()
 
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+}
 
-data_F=pd.DataFrame()
 for st in stock_list_nse:
-  try: 
-    stock = yf.Ticker(str(st))
-    df=stock.financials
-    # Sales Growth Average
-    I_0=float(df[df.index== 'Net Income'].iloc[:,3])
-    I_1=float(df[df.index== 'Net Income'].iloc[:,0])
-    growth_Avg = (((I_1/I_0)-1)/4)*100 # 4yr average growth rate
-    #Operating Income Growth Rate
-    
-    I_3=float(df[df.index== 'Operating Income'].iloc[:,3])
-    I_0=float(df[df.index== 'Operating Income'].iloc[:,0])
-    I_1=float(df[df.index== 'Operating Income'].iloc[:,1])
-    I_2=float(df[df.index== 'Operating Income'].iloc[:,2])
-    operatingGrowth_Avg = (((I_0/I_3)-1)/4)*100
-    # Market Beta Value
-    beta=stock.info['beta']
-    if (stock.info['netIncomeToCommon']!= False and stock.info['sharesOutstanding']!= False and stock.info['currentPrice']!= False):
-      net_income=stock.info['netIncomeToCommon']
-      total_shares=stock.info['sharesOutstanding']
-      eps=net_income/total_shares
-      price=stock.info['currentPrice']
-      if (type(stock.info['forwardEps'])!=type(None) and stock.info['forwardEps']<float(price/eps)):
-        pe=stock.info['forwardEps']
-      else:
-        pe=float(price/eps)
-    else:
-      pe=0
-      eps=0
-    
-    if (dfS[dfS.index.isin([stock.info['industry']])].empty == False):
-      I_pe= dfS['PE Ratio'].iloc[dfS.index == stock.info['industry']][0]
-      if (pe<I_pe):
-        V_ind=1
-      else:
-        V_ind=0
-    else:
-      I_pe=0
-      V_ind=0
+    try:
+        stock = yf.Ticker(st)
+        info = stock.info
+        df = stock.financials
 
-  
-    
-    
-    data=[{
-      'Stock': st,
-      'Sales_Growth':growth_Avg,
-      'Operating_Profit_Growth':operatingGrowth_Avg,
-      'Growth Indicator': np.where(I_0> I_1 and I_1>I_2 and I_2> I_3 and beta>1 , 1,0),
-      'Sector':stock.info['sector'],
-      'Industry':stock.info['industry'],
-      'PB Ratio':stock.info['priceToBook'],
-      'Industry PE': I_pe,
-      'Value Indicator':V_ind,
-      'EPS':eps,
-      'PE Ratio':pe ,
-      'D/E Ratio':stock.info['debtToEquity'],
-      'Beta':beta
-      
-    }]
-    data1=pd.DataFrame(data, columns = ['Stock', 'Sales_Growth','Operating_Profit_Growth','Sector','PB Ratio','EPS','PE Ratio','D/E Ratio','Growth Indicator','Beta',
-                                        'Industry','Industry PE','Value Indicator'])
-    data_F=data_F.append(data1)
-    data_F.to_csv("Recomm.csv")
-  except Exception as e:
+        # Retry alternative source if yfinance fails for info
+        if not info or 'industry' not in info:
+            url = f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{st}?modules=defaultKeyStatistics,financialData,summaryProfile"
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                json_data = response.json()
+                info = json_data.get('quoteSummary', {}).get('result', [{}])[0].get('summaryProfile', {})
 
-    print(e)
-    print(st)
+        if not info or 'industry' not in info:
+            raise ValueError("Missing industry data even after retry")
 
+        # Check required rows exist
+        if 'Net Income' not in df.index or 'Operating Income' not in df.index:
+            raise ValueError("Missing Net Income or Operating Income")
 
+        # Sales Growth Average
+        NI_0 = float(df.loc['Net Income'].iloc[3])
+        NI_1 = float(df.loc['Net Income'].iloc[0])
+        sales_growth = (((NI_1 / NI_0) - 1) / 4) * 100
 
+        # Operating Income Growth Rate
+        OI_0 = float(df.loc['Operating Income'].iloc[0])
+        OI_1 = float(df.loc['Operating Income'].iloc[1])
+        OI_2 = float(df.loc['Operating Income'].iloc[2])
+        OI_3 = float(df.loc['Operating Income'].iloc[3])
+        operating_growth = (((OI_0 / OI_3) - 1) / 4) * 100
+
+        # EPS and PE
+        net_income = info.get('netIncomeToCommon')
+        shares = info.get('sharesOutstanding')
+        price = info.get('currentPrice')
+
+        if net_income and shares and price:
+            eps = net_income / shares
+            if info.get('forwardEps') and info['forwardEps'] < price / eps:
+                pe = info['forwardEps']
+            else:
+                pe = price / eps
+        else:
+            eps = 0
+            pe = 0
+
+        # Beta
+        beta = info.get('beta', 0)
+
+        # Value Indicator: PE lower than industry avg
+        industry_pe = industry_avg['PE Ratio'].get(info['industry'], 0)
+        value_ind = 1 if pe < industry_pe else 0
+
+        # Growth Indicator: Rising operating income & beta > 1
+        growth_ind = int(OI_0 > OI_1 > OI_2 > OI_3 and beta > 1)
+
+        # Buffett Filter
+        passes_buffett = int(
+            pe < 20 and
+            info.get('priceToBook', 99) < 3 and
+            info.get('returnOnEquity', 0) > 0.15 and
+            info.get('debtToEquity', 999) < 50 and
+            info.get('operatingMargins', 0) > 0.10 and
+            info.get('bookValue', 0) > 0
+        )
+
+        # Lynch Filter
+        passes_lynch = int(
+            info.get('earningsGrowth', 0) > 0.15 and
+            info.get('revenueGrowth', 0) > 0.1 and
+            info.get('pegRatio', 99) < 1.5 and
+            info.get('returnOnAssets', 0) > 0.08 and
+            info.get('priceToSalesTrailing12Months', 99) < 2 and
+            info.get('grossMargins', 0) > 0.4
+        )
+
+        # Append results
+        row = {
+            'Stock': st,
+            'Sales_Growth': sales_growth,
+            'Operating_Profit_Growth': operating_growth,
+            'Growth Indicator': growth_ind,
+            'Sector': info.get('sector'),
+            'Industry': info.get('industry'),
+            'PB Ratio': info.get('priceToBook'),
+            'Industry PE': industry_pe,
+            'Value Indicator': value_ind,
+            'EPS': eps,
+            'PE Ratio': pe,
+            'D/E Ratio': info.get('debtToEquity'),
+            'Beta': beta,
+            'Buffett Filter': passes_buffett,
+            'Lynch Filter': passes_lynch
+        }
+
+        row_df = pd.DataFrame([row])
+        final_df = pd.concat([final_df, row_df], ignore_index=True)
+
+        # Save after each stock to avoid data loss
+        final_df.to_csv("Recomm.csv", index=False)
+        time.sleep(1)  # avoid rate limit
+
+    except Exception as e:
+        print(f"Error processing {st}: {e}")
+
+nseEquityPath = "EQUITY_L.csv"
+smeEquityPath = 'SME_EQUITY_L.csv'
+
+nseEquity = pd.read_csv(nseEquityPath)
+smeEquity = pd.read_csv(smeEquityPath)
+
+# Making List of Stocks File to Collect Data From 
+stock_list_nse = [x + ".NS" for x in nseEquity['SYMBOL']]
+
+# Industry parameter Recomendation
+industry_data = pd.read_csv("Recomm.csv")
+
+# Filter numeric columns only for groupby aggregation
+numeric_cols = ['PE Ratio', 'EPS', 'Sales_Growth', 'Operating_Profit_Growth']
+numeric_cols = [col for col in numeric_cols if col in industry_data.columns]
+industry_avg = industry_data.groupby("Industry")[numeric_cols].mean()
+
+# Data Collection
+final_df = pd.DataFrame()
+
+for st in stock_list_nse:
+    try:
+        stock = yf.Ticker(st)
+        info = stock.info
+        df = stock.financials
+
+        # Check required rows exist
+        if 'Net Income' not in df.index or 'Operating Income' not in df.index:
+            raise ValueError("Missing Net Income or Operating Income")
+
+        # Sales Growth Average
+        NI_0 = float(df.loc['Net Income'].iloc[3])
+        NI_1 = float(df.loc['Net Income'].iloc[0])
+        sales_growth = (((NI_1 / NI_0) - 1) / 4) * 100
+
+        # Operating Income Growth Rate
+        OI_0 = float(df.loc['Operating Income'].iloc[0])
+        OI_1 = float(df.loc['Operating Income'].iloc[1])
+        OI_2 = float(df.loc['Operating Income'].iloc[2])
+        OI_3 = float(df.loc['Operating Income'].iloc[3])
+        operating_growth = (((OI_0 / OI_3) - 1) / 4) * 100
+
+        # EPS and PE
+        net_income = info.get('netIncomeToCommon')
+        shares = info.get('sharesOutstanding')
+        price = info.get('currentPrice')
+
+        if net_income and shares and price:
+            eps = net_income / shares
+            if info.get('forwardEps') and info['forwardEps'] < price / eps:
+                pe = info['forwardEps']
+            else:
+                pe = price / eps
+        else:
+            eps = 0
+            pe = 0
+
+        # Beta
+        beta = info.get('beta', 0)
+
+        # Value Indicator: PE lower than industry avg
+        industry_pe = industry_avg['PE Ratio'].get(info['industry'], 0)
+        value_ind = 1 if pe < industry_pe else 0
+
+        # Growth Indicator: Rising operating income & beta > 1
+        growth_ind = int(OI_0 > OI_1 > OI_2 > OI_3 and beta > 1)
+
+        # Buffett Filter
+        passes_buffett = int(
+            pe < 20 and
+            info.get('priceToBook', 99) < 3 and
+            info.get('returnOnEquity', 0) > 0.15 and
+            info.get('debtToEquity', 999) < 50 and
+            info.get('operatingMargins', 0) > 0.10 and
+            info.get('bookValue', 0) > 0
+        )
+
+        # Lynch Filter
+        passes_lynch = int(
+            info.get('earningsGrowth', 0) > 0.15 and
+            info.get('revenueGrowth', 0) > 0.1 and
+            info.get('pegRatio', 99) < 1.5 and
+            info.get('returnOnAssets', 0) > 0.08 and
+            info.get('priceToSalesTrailing12Months', 99) < 2 and
+            info.get('grossMargins', 0) > 0.4
+        )
+
+        # Append results
+        row = {
+            'Stock': st,
+            'Sales_Growth': sales_growth,
+            'Operating_Profit_Growth': operating_growth,
+            'Growth Indicator': growth_ind,
+            'Sector': info.get('sector'),
+            'Industry': info.get('industry'),
+            'PB Ratio': info.get('priceToBook'),
+            'Industry PE': industry_pe,
+            'Value Indicator': value_ind,
+            'EPS': eps,
+            'PE Ratio': pe,
+            'D/E Ratio': info.get('debtToEquity'),
+            'Beta': beta,
+            'Buffett Filter': passes_buffett,
+            'Lynch Filter': passes_lynch
+        }
+
+        row_df = pd.DataFrame([row])
+        final_df = pd.concat([final_df, row_df], ignore_index=True)
+
+        # Save after each stock to avoid data loss
+        final_df.to_csv("Recomm.csv", index=False)
+
+    except Exception as e:
+        print(f"Error processing {st}: {e}")
