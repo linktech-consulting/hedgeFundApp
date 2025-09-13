@@ -6,7 +6,8 @@ This is demo version of Wealth Management Dashboard for Portfolio Managers
 1. `python -m venv venv`
 2. `source venv/bin/activate` (or `venv\Scripts\activate` on Windows)
 3. `pip install -r requirements.txt`
-4. `streamlit run Dashboard.py`
+4. `ollama serve`
+5. `streamlit run Dashboard.py`
 
 The aim of this project is to provide detailed analysis of stock news for the users so that they can make timely decisions in order to manage portfolios well.
 

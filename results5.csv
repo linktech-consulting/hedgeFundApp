@@ -1,0 +1,30 @@
+Symbol,Trend,Entry,Target,Stop Loss,Volatility,Score,RiskReward,Pattern,SignalTime,LLM_Call
+ABB.NS,Double Bottom+Neckline,5118.5,5145.19,5107.82,High,14,2.5,"MomentumUp,DoubleBottom",2025-08-07 09:45:00+00:00,"Action: Neutral
+Summary: Mixed price action with some support and resistance levels.
+Target: 5030
+Stop-Loss: 5000"
+AMBUJACEM.NS,Double Top+Neckline,590.65,588.06,591.69,Medium,11,2.5,"PullbackDown,DoubleTop",2025-08-06 09:30:00+00:00,"Action: Neutral
+Summary: Mixed price action with consolidation.
+Target: 585.00
+Stop-Loss: 575.00"
+BRITANNIA.NS,Double Top+Neckline,5380.0,5351.17,5391.53,High,11,2.5,"PullbackDown,DoubleTop",2025-08-06 09:50:00+00:00,LLM Error
+DIVISLAB.NS,Double Top+Neckline,6384.0,6358.03,6394.39,High,11,2.5,"PullbackDown,DoubleTop",2025-08-01 09:35:00+00:00,LLM Error
+MOTHERSON.NS,Double Bottom+Neckline,94.42,95.04,94.17,Very High,12,2.5,"MomentumUp,DoubleBottom",2025-08-07 09:50:00+00:00,LLM Error
+SIEMENS.NS,Double Top+Neckline,3053.5,3034.83,3060.97,Medium,12,2.5,"MomentumDown,DoubleTop",2025-08-08 09:15:00+00:00,LLM Error
+UNITDSPR.NS,Double Bottom+Neckline,1339.8,1346.36,1337.18,Very High,14,2.5,"MomentumUp,DoubleBottom",2025-08-04 09:30:00+00:00,"Action: Neutral
+Summary: Double Bottom+Neckline pattern suggests potential for price consolidation.
+Target: 1346.36
+Stop-Loss: 1337.18"
+POWERGRID.NS,Double Top+Neckline,285.95,285.02,286.32,Medium,11,2.5,"PullbackDown,DoubleTop",2025-08-05 09:50:00+00:00,"Action: Neutral
+Summary: Price consolidating, no clear trend.
+Target: 285.00
+Stop-Loss: 284.50"
+BAJAJFINSV.NS,Double Top+Neckline,1913.5,1903.85,1917.36,Very High,14,2.5,"MomentumDown,DoubleTop",2025-08-01 09:40:00+00:00,"Action: Neutral
+Summary: Mixed price action with strong volume.
+Target: 1917.00
+Stop-Loss: 1916.00"
+HCLTECH.NS,Double Bottom+Neckline,1475.3,1481.15,1472.96,Very High,14,2.5,"MomentumUp,DoubleBottom",2025-08-07 09:40:00+00:00,"Action: Strong Buy
+Summary: Double Bottom+Neckline breakout.
+Target: 1481.15
+Stop-Loss: 1472.96"
+HINDALCO.NS,Double Bottom+Neckline,688.5,692.16,687.04,High,14,2.5,"MomentumUp,DoubleBottom",2025-08-07 09:50:00+00:00,LLM Error
